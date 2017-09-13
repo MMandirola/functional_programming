@@ -27,6 +27,26 @@ redexes l@(Aplication (Abstraction a b) c ) = [l] ++ redexes b ++ redexes c
 redexes (Aplication a b ) = redexes a ++ redexes b
 redexes (Abstraction a b ) = redexes b
 
+reduceNO:: LambdaTerm -> LambdaTerm
+reduceNO (Aplication (Abstraction a b) c) = reduceNO(substitution b a c)
+reduceNO (Aplication a b) = (Aplication (reduceNO a) (reduceNO b))
+reduceNO (Abstraction a b) = (Abstraction a (reduceNO b))
+reduceNO a = a
+
+isRedex:: LambdaTerm -> Bool
+isRedex (Aplication (Abstraction a b) c) = True
+isRedex _ = False
+
+reduceB:: LambdaTerm -> LambdaTerm
+reduceB (Aplication (Abstraction a b) c) = substitution b a c 
+reduceB a = a
+
+reduceAO:: LambdaTerm -> LambdaTerm
+reduceAO (Aplication (Abstraction a b) c) = if isRedex(c) then reduceAO(Aplication (Abstraction a b) (reduceAO c))  else (substitution b a c) 
+reduceAO (Aplication a b)=  (Aplication (reduceAO a) (reduceAO b))
+reduceAO (Abstraction a b) = (Abstraction a (reduceAO b))
+reduceAO a = a
+
 test1 = Variable "a"
 test2 = Variable "b"
 test3 = Variable "c"
