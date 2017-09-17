@@ -48,6 +48,7 @@ isNF::LambdaTerm -> Bool
 isNF a = redexes(a) == []
 
 reduceNO:: LambdaTerm -> LambdaTerm
+reduceNO l@(Aplication (Aplication a b) c) = if (isNF l) then l else reduceNO(Aplication (reduceNO(Aplication a b)) c)
 reduceNO (Aplication (Abstraction a b) c) = reduceNO(substitution b a c)
 reduceNO (Aplication a b) = (Aplication (reduceNO a) (reduceNO b))
 reduceNO (Abstraction a b) = (Abstraction a (reduceNO b))
@@ -71,3 +72,14 @@ test7 = Aplication (Abstraction "d" test1) test1
 test8 = Aplication test7 test4
 test9 = Abstraction "e" test7
 test10 = Aplication (Abstraction "y" (Aplication (Abstraction "x" (Aplication (Variable "y") (Variable "x"))) (test1))) (Variable "x")
+
+true = Abstraction "x" (Abstraction "y" (Variable "x"))
+false = Abstraction "x" (Abstraction "y" (Variable "y"))
+andc = Abstraction "a" (Abstraction "b" (Aplication (Aplication (Variable "a") (Variable "b")) false))
+ifc = Abstraction "c" (Abstraction "t" (Abstraction "f" (Aplication (Aplication (Variable "c") (Variable "t")) (Variable "f"))))
+orc = Abstraction "a" (Abstraction "b" (Aplication(Aplication (Variable "a") true) (Variable "b")))
+notc = Abstraction "a" (Aplication (Aplication (Variable "a") false) true)
+zero = Abstraction "s" (Abstraction "z" (Variable "z"))
+one = Abstraction "s" (Abstraction "z" (Aplication (Variable "s") (Variable "z")))
+add = Abstraction "m" (Abstraction "n" (Abstraction "s" (Abstraction "z" (Aplication (Aplication (Variable "m") (Variable "s")) (Aplication (Aplication (Variable "n") (Variable "s")) (Variable "z"))))))
+mult =  Abstraction "m" (Abstraction "n" (Abstraction "s" (Abstraction "z" (Aplication (Aplication (Variable "m") (Aplication (Variable "n") (Variable "s"))) (Variable "z")))))
