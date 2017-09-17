@@ -1,5 +1,5 @@
 import Data.List
-data LambdaTerm = Variable [Char] | Aplication LambdaTerm LambdaTerm | Abstraction [Char] LambdaTerm deriving (Show)
+data LambdaTerm = Variable [Char] | Aplication LambdaTerm LambdaTerm | Abstraction [Char] LambdaTerm deriving (Show, Eq)
 
 toString:: LambdaTerm -> [Char]
 toString (Variable a) = a
@@ -27,25 +27,39 @@ redexes l@(Aplication (Abstraction a b) c ) = [l] ++ redexes b ++ redexes c
 redexes (Aplication a b ) = redexes a ++ redexes b
 redexes (Abstraction a b ) = redexes b
 
+combinations:: Int -> [[Char]]
+combinations 0 = []
+combinations 1 = map (:[]) ['a'..'z']
+combinations n = [y++x | x <- (combinations 1), y <- (combinations (n-1))]
+
+variableNames::[[Char]]
+variableNames = concat(map combinations [1..])
+
+firstnotina:: [[Char]] -> [Char]
+firstnotina a = (filter (\x ->(elemIndex x a)== Nothing) variableNames) !! 0
+
+alphaConversion:: LambdaTerm -> [[Char]] -> LambdaTerm
+alphaConversion l@(Variable a) b = l
+alphaConversion (Aplication l@(Abstraction a b) c ) d = (Aplication (alphaConversion l (d++(freeVars c))) (alphaConversion c (d++(freeVars c))))
+alphaConversion (Aplication a b) c= (Aplication (alphaConversion a c) (alphaConversion b c))
+alphaConversion (Abstraction a b) c = if ((elemIndex a c) /= Nothing) then alphaConversion (Abstraction (firstnotina c) (substitution b a (Variable (firstnotina c)))) c else (Abstraction a (alphaConversion b c))
+
+isNF::LambdaTerm -> Bool
+isNF a = redexes(a) == []
+
 reduceNO:: LambdaTerm -> LambdaTerm
 reduceNO (Aplication (Abstraction a b) c) = reduceNO(substitution b a c)
 reduceNO (Aplication a b) = (Aplication (reduceNO a) (reduceNO b))
 reduceNO (Abstraction a b) = (Abstraction a (reduceNO b))
 reduceNO a = a
 
-isRedex:: LambdaTerm -> Bool
-isRedex (Aplication (Abstraction a b) c) = True
-isRedex _ = False
-
-reduceB:: LambdaTerm -> LambdaTerm
-reduceB (Aplication (Abstraction a b) c) = substitution b a c 
-reduceB a = a
-
-reduceAO:: LambdaTerm -> LambdaTerm
-reduceAO (Aplication (Abstraction a b) c) = if isRedex(c) then reduceAO(Aplication (Abstraction a b) (reduceAO c))  else (substitution b a c) 
-reduceAO (Aplication a b)=  (Aplication (reduceAO a) (reduceAO b))
+reduceAO::LambdaTerm -> LambdaTerm
+reduceAO (Aplication (Abstraction a b) c) = if (isNF b) then (if (isNF c) then substitution b a c else (reduceAO (Aplication (Abstraction a b) (reduceAO c)))) else (reduceAO ((Aplication (Abstraction a (reduceAO b)) c)))
+reduceAO (Aplication a b) = (Aplication (reduceAO a) (reduceAO b))
 reduceAO (Abstraction a b) = (Abstraction a (reduceAO b))
 reduceAO a = a
+
+
 
 test1 = Variable "a"
 test2 = Variable "b"
