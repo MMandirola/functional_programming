@@ -55,9 +55,9 @@ reduceNO (Abstraction a b) = (Abstraction a (reduceNO b))
 reduceNO a = a
 
 reduceAO::LambdaTerm -> LambdaTerm
-reduceAO (Aplication (Abstraction a b) c) = if (isNF b) then (if (isNF c) then substitution b a c else (reduceAO (Aplication (Abstraction a b) (reduceAO c)))) else (reduceAO ((Aplication (Abstraction a (reduceAO b)) c)))
-reduceAO (Aplication a b) = (Aplication (reduceAO a) (reduceAO b))
-reduceAO (Abstraction a b) = (Abstraction a (reduceAO b))
+reduceAO (Aplication (Abstraction a b) c) = if (isNF b) then (if (isNF c) then reduceAO(substitution b a c) else (reduceAO (Aplication (Abstraction a b) (reduceAO c)))) else (reduceAO ((Aplication (Abstraction a (reduceAO b)) c)))
+reduceAO g@(Aplication a b) =  if isNF(g) then g else reduceAO(Aplication (reduceAO a) (reduceAO b))
+reduceAO g@(Abstraction a b) = if isNF(g) then g else reduceAO(Abstraction a (reduceAO b))
 reduceAO a = a
 
 
