@@ -1,5 +1,5 @@
 import Data.List
-data LambdaTerm = Variable [Char] | Aplication LambdaTerm LambdaTerm | Abstraction [Char] LambdaTerm deriving (Show)
+data LambdaTerm = Variable [Char] | Aplication LambdaTerm LambdaTerm | Abstraction [Char] LambdaTerm deriving (Eq, Show)
 
 toString:: LambdaTerm -> [Char]
 toString (Variable a) = a
@@ -26,6 +26,36 @@ redexes (Variable a) = []
 redexes l@(Aplication (Abstraction a b) c ) = [l] ++ redexes b ++ redexes c
 redexes (Aplication a b ) = redexes a ++ redexes b
 redexes (Abstraction a b ) = redexes b
+
+inNormalForm:: LambdaTerm -> Bool
+inNormalForm a = redexes(a) == []
+
+normalReduction:: LambdaTerm -> LambdaTerm
+normalReduction (Aplication (Abstraction x m) n) = substitution m x n
+normalReduction (Aplication m n)
+    | m2 /= m = (Aplication m2 n)
+    | otherwise = (Aplication m (normalReduction n))
+    where m2 = normalReduction m
+
+normalReduction (Abstraction x m) = Abstraction x (normalReduction m)
+normalReduction a = a
+
+applicativeReduction:: LambdaTerm -> LambdaTerm
+applicativeReduction (Aplication (Abstraction x m) n) 
+    | m2 == m && n2 == n = substitution m x n
+    | m2 == m = Aplication (Abstraction x m) (applicativeReduction n)
+    | otherwise = Aplication (Abstraction x (applicativeReduction m)) (n)
+    where 
+        m2 = applicativeReduction m
+        n2 = applicativeReduction n
+        
+applicativeReduction (Aplication m n)
+    | m2 /= m = (Aplication m2 n)
+    | otherwise = (Aplication m (applicativeReduction n))
+    where m2 = applicativeReduction m
+    
+applicativeReduction (Abstraction x m) = Abstraction x (applicativeReduction m)
+applicativeReduction a = a
 
 test1 = Variable "a"
 test2 = Variable "b"
