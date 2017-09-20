@@ -1,37 +1,66 @@
 import Data.List
-data LambdaTerm = Variable [Char] | Aplication LambdaTerm LambdaTerm | Abstraction [Char] LambdaTerm deriving (Eq, Show)
+
+data LambdaTerm = 
+    Variable [Char] 
+    | Aplication LambdaTerm LambdaTerm 
+    | Abstraction [Char] LambdaTerm 
+    | KBool Bool
+    | KInt Int
+    | KIf 
+    | KLt
+    | KMult
+    | KSub
+    deriving (Eq, Show)
 
 toString:: LambdaTerm -> [Char]
 toString (Variable a) = a
 toString (Aplication a b) = "(" ++ toString a ++ " " ++ toString b ++ ")"
 toString (Abstraction a b) = "(\x03bb"++ a ++ "." ++ toString b ++")"
+toString (KBool a) = show a
+toString (KInt a) = show a
+toString (KIf) = "?"
+toString (KLt) = "<"
+toString (KMult) = "*"
+toString (KSub) = "-"
 
 freeVars:: LambdaTerm -> [[Char]]
 freeVars (Variable a) = [a]
 freeVars (Aplication a b) = nub(freeVars a ++ freeVars b)
 freeVars (Abstraction a b) = delete a (freeVars b)
+freeVars a = []
 
 boundVars:: LambdaTerm -> [[Char]]
 boundVars (Variable a) = []
 boundVars (Aplication a b) = nub(boundVars a ++ boundVars b)
 boundVars (Abstraction a b) = nub([a] ++ boundVars b)
+boundVars a = []
 
 substitution:: LambdaTerm -> [Char] -> LambdaTerm -> LambdaTerm
 substitution (Variable a) b c = if (b == a) then c else (Variable a)
 substitution (Aplication a b) c d = (Aplication (substitution a c d) (substitution b c d) )
 substitution (Abstraction a b) c d = if a == c then (Abstraction a b) else (Abstraction a (substitution b c d))
+substitution a b c = a
 
 redexes:: LambdaTerm -> [LambdaTerm]
 redexes (Variable a) = []
+redexes l@(Aplication (Aplication KLt a) b) = [l]
+redexes l@(Aplication (Aplication KMult a) b) = [l]
+redexes l@(Aplication (Aplication KSub a) b) = [l]
+redexes l@(Aplication (Aplication KIf a) b) = [l]
 redexes l@(Aplication (Abstraction a b) c ) = [l] ++ redexes b ++ redexes c
 redexes (Aplication a b ) = redexes a ++ redexes b
 redexes (Abstraction a b ) = redexes b
+redexes a = []
 
 inNormalForm:: LambdaTerm -> Bool
 inNormalForm a = redexes(a) == []
 
 normalReduction:: LambdaTerm -> LambdaTerm
 normalReduction (Aplication (Abstraction x m) n) = substitution m x n
+normalReduction (Aplication (Aplication KLt (KInt a)) (KInt b)) = KBool (a < b)
+normalReduction (Aplication (Aplication KMult (KInt a)) (KInt b)) = KInt (a * b)
+normalReduction (Aplication (Aplication KSub (KInt a)) (KInt b)) = KInt (a - b)
+normalReduction (Aplication (Aplication (Aplication KIf (KBool a)) b) c) = if a then b else c
 normalReduction (Aplication m n)
     | m2 /= m = (Aplication m2 n)
     | otherwise = (Aplication m (normalReduction n))
@@ -108,3 +137,7 @@ test7 = Aplication (Abstraction "d" test1) test1
 test8 = Aplication test7 test4
 test9 = Abstraction "e" test7
 test10 = Aplication (Abstraction "y" (Aplication (Abstraction "x" (Aplication (Variable "y") (Variable "x"))) (test1))) (Variable "x")
+test11 = Aplication (Aplication (Aplication KIf (KBool True)) test10) test8
+
+
+
