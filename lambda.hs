@@ -3,7 +3,7 @@ data LambdaTerm = Variable [Char] | Aplication LambdaTerm LambdaTerm | Abstracti
 
 toString:: LambdaTerm -> [Char]
 toString (Variable a) = a
-toString (Aplication a b) = toString a ++ " " ++ toString b
+toString (Aplication a b) = "(" ++ toString a ++ " " ++ toString b ++ ")"
 toString (Abstraction a b) = "(\x03bb"++ a ++ "." ++ toString b ++")"
 
 freeVars:: LambdaTerm -> [[Char]]
@@ -75,8 +75,17 @@ nAbs vs b = foldr Abstraction b vs
 nApl:: [LambdaTerm] -> LambdaTerm
 nApl es = foldl1 Aplication es
 
+nAplR:: [LambdaTerm] -> LambdaTerm
+nAplR es = foldr1 Aplication es
+
 nVar:: [String] -> LambdaTerm
 nVar vs = nApl(map Variable vs)
+
+nVarR:: [String] -> LambdaTerm
+nVarR vs = nAplR(map Variable vs)
+
+naturalToChurch:: Int -> LambdaTerm
+naturalToChurch n = nAbs ["s", "z"] (nVarR (take n (repeat "s") ++ ["z"]))
 
 true = Abstraction "x" (Abstraction "y" (Variable "x"))
 false = Abstraction "x" (Abstraction "y" (Variable "y"))
