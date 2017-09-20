@@ -57,6 +57,38 @@ applicativeReduction (Aplication m n)
 applicativeReduction (Abstraction x m) = Abstraction x (applicativeReduction m)
 applicativeReduction a = a
 
+fullNormalReduction:: LambdaTerm -> [LambdaTerm]
+fullNormalReduction a
+    | a2 == a = []
+    | otherwise = [a2] ++ fullNormalReduction a2
+    where a2 = normalReduction a
+    
+fullApplicativeReduction:: LambdaTerm -> [LambdaTerm]
+fullApplicativeReduction a
+    | a2 == a = []
+    | otherwise = [a2] ++ fullApplicativeReduction a2
+    where a2 = applicativeReduction a
+    
+nAbs:: [String] -> LambdaTerm -> LambdaTerm
+nAbs vs b = foldr Abstraction b vs
+
+nApl:: [LambdaTerm] -> LambdaTerm
+nApl es = foldl1 Aplication es
+
+nVar:: [String] -> LambdaTerm
+nVar vs = nApl(map Variable vs)
+
+true = Abstraction "x" (Abstraction "y" (Variable "x"))
+false = Abstraction "x" (Abstraction "y" (Variable "y"))
+andc = Abstraction "a" (Abstraction "b" (Aplication (Aplication (Variable "a") (Variable "b")) false))
+ifc = Abstraction "c" (Abstraction "t" (Abstraction "f" (Aplication (Aplication (Variable "c") (Variable "t")) (Variable "f"))))
+orc = Abstraction "a" (Abstraction "b" (Aplication(Aplication (Variable "a") true) (Variable "b")))
+notc = Abstraction "a" (Aplication (Aplication (Variable "a") false) true)
+zero = Abstraction "s" (Abstraction "z" (Variable "z"))
+one = Abstraction "s" (Abstraction "z" (Aplication (Variable "s") (Variable "z")))
+add = Abstraction "m" (Abstraction "n" (Abstraction "s" (Abstraction "z" (Aplication (Aplication (Variable "m") (Variable "s")) (Aplication (Aplication (Variable "n") (Variable "s")) (Variable "z"))))))
+mult =  Abstraction "m" (Abstraction "n" (Abstraction "s" (Abstraction "z" (Aplication (Aplication (Variable "m") (Aplication (Variable "n") (Variable "s"))) (Variable "z")))))
+
 test1 = Variable "a"
 test2 = Variable "b"
 test3 = Variable "c"
