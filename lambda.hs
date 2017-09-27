@@ -41,19 +41,19 @@ normalReduction (Abstraction x m) = Abstraction x (normalReduction m)
 normalReduction a = a
 
 applicativeReduction:: LambdaTerm -> LambdaTerm
-applicativeReduction (Aplication (Abstraction x m) n) 
+applicativeReduction (Aplication (Abstraction x m) n)
     | m2 == m && n2 == n = substitution m x n
     | m2 == m = Aplication (Abstraction x m) (applicativeReduction n)
     | otherwise = Aplication (Abstraction x (applicativeReduction m)) (n)
-    where 
+    where
         m2 = applicativeReduction m
         n2 = applicativeReduction n
-        
+
 applicativeReduction (Aplication m n)
     | m2 /= m = (Aplication m2 n)
     | otherwise = (Aplication m (applicativeReduction n))
     where m2 = applicativeReduction m
-    
+
 applicativeReduction (Abstraction x m) = Abstraction x (applicativeReduction m)
 applicativeReduction a = a
 
@@ -62,13 +62,13 @@ fullNormalReduction a
     | a2 == a = []
     | otherwise = [a2] ++ fullNormalReduction a2
     where a2 = normalReduction a
-    
+
 fullApplicativeReduction:: LambdaTerm -> [LambdaTerm]
 fullApplicativeReduction a
     | a2 == a = []
     | otherwise = [a2] ++ fullApplicativeReduction a2
     where a2 = applicativeReduction a
-    
+
 nAbs:: [String] -> LambdaTerm -> LambdaTerm
 nAbs vs b = foldr Abstraction b vs
 
@@ -105,6 +105,3 @@ test4 = Aplication test1 test2
 test5 = Abstraction "d" test1
 test6 = Abstraction "a" test1
 test7 = Aplication (Abstraction "d" test1) test1
-test8 = Aplication test7 test4
-test9 = Abstraction "e" test7
-test10 = Aplication (Abstraction "y" (Aplication (Abstraction "x" (Aplication (Variable "y") (Variable "x"))) (test1))) (Variable "x")
